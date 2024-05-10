@@ -7,24 +7,34 @@ if (!gl) {
     throw new Error('WebGL not supported');
 }
 
-// Vertices
-const vertexData = [
-    -0.5, -0.5, // Bottom left
-    -0.5, 0.5, // Top-left
-    0.5, -0.5, //  Bottom right
-    0.5, 0.5, //Top right
-    0.5, -0.5, //Bottom tight
-    -0.5, 0.5 // Top left
+// Vertices 
+const vertexData = [//Your co-ordinates are x,y,z but when you use them in the shader you only use x,y. which makes your co-ordinates to misbehave
+    //front face
+    //I will Remove the zeros that represent the z- cordinate system
+    0.5,0.5,// 0,//first quadrat  vertices 0
+    -0.5,0.5, //0,//second                     1
+    -0.5,-0.5, //0,//3 quadrant                2
+    0.5,-0.5, //0,//4 quadrat z is 0 
+
 ];
+
+
+/*
+You only created a buffer for texture and not for your vertex data
+*/
+
+
+let buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
 
 // Texture coordinates
 const textureCoordinate = new Float32Array([
-    0.0, 0.0,
-    0.0, 1.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    1.0, 0.0,
-    0.0, 1.0
+    1.0, 1.0, // Bottom left
+    0.0, 1.0, // Top left
+    0.0, 0.0, // Bottom right
+    1.0, 0.0, // Top right
+   
 ]);
 
 // Create a buffer for the texture coordinates
@@ -55,6 +65,7 @@ const vsSource = `
     void main() {
         vTexCoord = texCoord;
         gl_Position = vec4(position, 0, 1.0);
+        gl_PointSize = 50.0;
     }
 `;
 
@@ -74,7 +85,8 @@ const fsSource = `
     uniform sampler2D texture;
 
     void main() {
-        gl_FragColor = texture2D(texture, vTexCoord);
+        // gl_FragColor = texture2D(texture, vTexCoord);
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
 `;
 
@@ -99,9 +111,12 @@ if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
 }
 
 const positionLocation = gl.getAttribLocation(program, "position");
+gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
 gl.enableVertexAttribArray(positionLocation);
 gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
+
+//Atttribute location of texture coordinates
 const texCoordLocation = gl.getAttribLocation(program, "texCoord");
 gl.enableVertexAttribArray(texCoordLocation);
 gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordinateBuffer);
@@ -110,8 +125,12 @@ gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 gl.clearColor(0, 0, 0, 0); // Set clear color
 gl.clear(gl.COLOR_BUFFER_BIT);
 gl.useProgram(program);
-gl.drawArrays(gl.TRIANGLES, 0, 6);
+gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
+
+
+// checks if its to power of two
 function isPowerOfTwo(value) {
     return (value & (value - 1)) === 0;
 }
