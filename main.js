@@ -14,12 +14,15 @@ const vertexData = [//Your co-ordinates are x,y,z but when you use them in the s
     0.5,0.5,// 0,//first quadrat  vertices 0
     -0.5,0.5, //0,//second                     1
     -0.5,-0.5, //0,//3 quadrant                2
-    0.5,-0.5, //0,//4 quadrat z is 0 
 
+    -0.5,-0.5, //0,//3 quadrant                2
+    0.5,-0.5, //0,//4 quadrat z is 0 
+    0.5,0.5,// 0,//first quadrat  vertices 0
 ];
 
 
 /*
+It is easier to deal with textures when you are having triangles instead of square(for me at least...), so i divided your square into two triangles and did the same on your textures...
 You only created a buffer for texture and not for your vertex data
 */
 
@@ -29,21 +32,22 @@ gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
 
 // Texture coordinates
-const textureCoordinate = new Float32Array([
+const shipTextureCoordinate = new Float32Array([
     1.0, 1.0, // Bottom left
     0.0, 1.0, // Top left
     0.0, 0.0, // Bottom right
+    0.0, 0.0, // Bottom right
     1.0, 0.0, // Top right
-   
+    1.0, 1.0, // Bottom left
 ]);
 
 // Create a buffer for the texture coordinates
-const textureCoordinateBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordinateBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, textureCoordinate, gl.STATIC_DRAW);
+const shipTextureCoordinateBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, shipTextureCoordinateBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, shipTextureCoordinate, gl.STATIC_DRAW);
 
-const texture = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, texture);
+const shipTexture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, shipTexture);
 gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // This flips the image orientation to be upright.
 
 if (isPowerOfTwo(image.width) && isPowerOfTwo(image.height)) {
@@ -59,11 +63,11 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 // Vertex shader
 const vsSource = `
     attribute vec2 position;
-    attribute vec2 texCoord;
+    attribute vec2 stexCoord;
     varying vec2 vTexCoord;
 
     void main() {
-        vTexCoord = texCoord;
+        vTexCoord = stexCoord;
         gl_Position = vec4(position, 0, 1.0);
         gl_PointSize = 50.0;
     }
@@ -85,8 +89,8 @@ const fsSource = `
     uniform sampler2D texture;
 
     void main() {
-        // gl_FragColor = texture2D(texture, vTexCoord);
-        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        gl_FragColor = texture2D(texture, vTexCoord);
+        // gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // I added this just to see how the square behaves without the texture, it isnt necessary anymore thoo.
     }
 `;
 
@@ -111,22 +115,22 @@ if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
 }
 
 const positionLocation = gl.getAttribLocation(program, "position");
-gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+gl.bindBuffer(gl.ARRAY_BUFFER,buffer); //This ensures that the enabled vertex is for the vertexData
 gl.enableVertexAttribArray(positionLocation);
 gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
 
 //Atttribute location of texture coordinates
-const texCoordLocation = gl.getAttribLocation(program, "texCoord");
-gl.enableVertexAttribArray(texCoordLocation);
-gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordinateBuffer);
-gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+const shipTexCoordLocation = gl.getAttribLocation(program, "stexCoord");
+gl.enableVertexAttribArray(shipTexCoordLocation);
+gl.bindBuffer(gl.ARRAY_BUFFER, shipTextureCoordinateBuffer); 
+gl.vertexAttribPointer(shipTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
 gl.clearColor(0, 0, 0, 0); // Set clear color
 gl.clear(gl.COLOR_BUFFER_BIT);
 gl.useProgram(program);
-gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+gl.drawArrays(gl.TRIANGLE_FAN, 0, 3);
+gl.drawArrays(gl.TRIANGLE_FAN, 3, 3);
 
 
 
